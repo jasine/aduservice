@@ -3,7 +3,7 @@ package basic
 import (
 	"bytes"
 	"crypto/md5"
-	"hash"
+	//"hash"
 	"io/ioutil"
 )
 
@@ -15,28 +15,23 @@ const (
 type BasicAdu struct {
 	localmd5 []byte
 	file     string
-	md5Ctx   hash.Hash
-	buffer   *bytes.Buffer
 }
 
 func NewBasicAdu(file string) *BasicAdu {
-	buf := make([]byte, 128)
 	b := &BasicAdu{
-		file:   file,
-		md5Ctx: md5.New(),
-		buffer: bytes.NewBuffer(buf),
+		file: file,
 	}
-	b.getLocalMd5()
+	b.GetLocalMd5()
 	return b
 }
 
-func (b *BasicAdu) getLocalMd5() error {
+func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
 	bs, err := ioutil.ReadFile(b.file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	b.localmd5 = bs
-	return nil
+	return bs, nil
 }
 
 func (b *BasicAdu) setLocalMd5() error {
@@ -44,27 +39,28 @@ func (b *BasicAdu) setLocalMd5() error {
 	return err
 }
 
-func (b *BasicAdu) computeMd5(name, pwd string) []byte {
-	b.buffer.Reset()
-	b.buffer.WriteString(name)
-	b.buffer.WriteString(":")
-	b.buffer.WriteString(pwd)
-	b.buffer.WriteString("#deepglint")
-	b.md5Ctx.Write(b.buffer.Bytes())
-	md5bs := b.md5Ctx.Sum(nil)
+func ComputeMd5(name, pwd string) []byte {
+	buf := make([]byte, 0, 128)
+	buf = append(buf, []byte(name)...)
+	buf = append(buf, []byte(":")...)
+	buf = append(buf, []byte(pwd)...)
+	buf = append(buf, []byte("#deepglint")...)
+	md5Ctx := md5.New()
+	md5Ctx.Write(buf)
+	md5bs := md5Ctx.Sum(nil)
 	return md5bs
 }
 
 func (b *BasicAdu) Auth(name, pwd string) bool {
 	if b.localmd5 != nil {
-		return bytes.Equal(b.localmd5, b.computeMd5(name, pwd))
+		return bytes.Equal(b.localmd5, ComputeMd5(name, pwd))
 	}
 	return false
 }
 
 func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) bool {
 	if b.Auth(name, oldpwd) {
-		b.localmd5 = b.computeMd5(name, newpwd)
+		b.localmd5 = ComputeMd5(name, newpwd)
 		err := b.setLocalMd5()
 		if err != nil {
 			return false
@@ -76,7 +72,7 @@ func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) bool {
 }
 
 func (b *BasicAdu) ResetUserAndPwd() bool {
-	b.localmd5 = b.computeMd5(Init_UserNmae, Init_UserPwd)
+	b.localmd5 = ComputeMd5(Init_UserNmae, Init_UserPwd)
 	err := b.setLocalMd5()
 	if err != nil {
 		return false
