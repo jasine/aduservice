@@ -3,8 +3,8 @@ package basic
 import (
 	"bytes"
 	"crypto/md5"
-	//"hash"
 	"io/ioutil"
+	"log"
 )
 
 const (
@@ -28,6 +28,7 @@ func NewBasicAdu(file string) *BasicAdu {
 func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
 	bs, err := ioutil.ReadFile(b.file)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 	b.localmd5 = bs
@@ -63,6 +64,7 @@ func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) bool {
 		b.localmd5 = ComputeMd5(name, newpwd)
 		err := b.setLocalMd5()
 		if err != nil {
+			log.Println(err)
 			return false
 		} else {
 			return true
@@ -75,6 +77,7 @@ func (b *BasicAdu) ResetUserAndPwd() bool {
 	b.localmd5 = ComputeMd5(Init_UserNmae, Init_UserPwd)
 	err := b.setLocalMd5()
 	if err != nil {
+		log.Println(err)
 		return false
 	} else {
 		return true

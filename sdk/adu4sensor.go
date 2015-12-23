@@ -4,7 +4,7 @@ import (
 	"github.com/deepglint/aduservice/basic"
 )
 
-var filePath string = "/data/adu/auth"
+var filePath string = "config/auth"
 
 var basicAuth *basic.BasicAdu = basic.NewBasicAdu(filePath)
 
