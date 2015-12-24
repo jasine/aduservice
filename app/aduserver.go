@@ -27,9 +27,13 @@ func main() {
 	mux.HandleFunc("/changepwd", cl.Changepwd)
 	mux.HandleFunc("/reset", cl.Reset)
 	mux.HandleFunc("/update", cl.Update)
+	mux.HandleFunc("/test", Test)
 
 	log.Printf("Http server listens on %s\n", HttpAddr)
 	http.ListenAndServe(HttpAddr, mux)
+}
+func Test(rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(rw, TRUE_BODY)
 }
 
 type Controller struct {
@@ -38,7 +42,7 @@ type Controller struct {
 
 func (c *Controller) praseAndAuth(r *http.Request) (bool, string, string) {
 	auth, err := utils.ParseAuthHeader(r.Header.Get("Authorization"))
-
+	//log.Println(err)
 	if err == nil && c.adu.Auth(auth.Username, auth.Password) {
 		return true, auth.Username, auth.Password
 	}

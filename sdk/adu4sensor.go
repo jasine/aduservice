@@ -6,7 +6,11 @@ import (
 
 var filePath string = "config/auth"
 
-var basicAuth *basic.BasicAdu = basic.NewBasicAdu(filePath)
+var basicAuth *basic.BasicAdu = nil
+
+func InitBasicAuth4Sensor() {
+	basicAuth = basic.NewBasicAdu(filePath)
+}
 
 func BasicAuth(username, password string) bool {
 	return basicAuth.Auth(username, password)
