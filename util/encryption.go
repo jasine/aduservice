@@ -4,19 +4,38 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"errors"
 )
 
+//"github.com/deepglint/aduservice/util"
+//Encrypt(origData []byte) ([]byte, error)
+//Decrypt(crypted []byte) ([]byte, error)
 var (
-	aes_key = "#yadda@deepglint"
-	aes_iv  = "^On1shiuva4$"
+	aes_key  = "#yadda@deepglint"
+	aes_iv   = "^On1shiuva4$"
+	aes_flag = []byte("#muse&libra-t")
 )
 
 func Encrypt(origData []byte) ([]byte, error) {
-	return aesEncrypt(origData, []byte(aes_key))
+	return aesEncrypt(append(origData, aes_flag...), []byte(aes_key))
 }
 
 func Decrypt(crypted []byte) ([]byte, error) {
-	return aesDecrypt(crypted, []byte(aes_key))
+	data, err := aesDecrypt(crypted, []byte(aes_key))
+	if err != nil {
+		return data, err
+	}
+	if aescheck(data) {
+		return data[:len(data)-len(aes_flag)], nil
+	} else {
+		return data, errors.New("not valid")
+	}
+}
+func aescheck(data []byte) bool {
+	if len(data) >= len(aes_flag) && bytes.Equal(aes_flag, data[len(data)-len(aes_flag):]) {
+		return true
+	}
+	return false
 }
 
 // 3DES加密
