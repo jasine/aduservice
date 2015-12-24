@@ -14,6 +14,35 @@ func TestBasicEncrypt(t *testing.T) {
 	round(t, data)
 }
 
+func TestValid(t *testing.T) {
+	data := []byte("hello world")
+	data1, err := Encrypt(data)
+	if err != nil {
+		t.Error(err)
+	}
+	data1[0] = byte(128)
+	_, err = Decrypt(data1)
+	if err == nil {
+		t.Error(err)
+	}
+	//equal(t, data, data2)
+}
+
+func TestBigValid(t *testing.T) {
+	data := make([]byte, 1024*1024)
+	data[1024] = byte(110)
+	data1, err := Encrypt(data)
+	if err != nil {
+		t.Error(err)
+	}
+	data1[0] = byte(128)
+	_, err = Decrypt(data1)
+	if err == nil {
+		t.Error(err)
+	}
+	//equal(t, data, data2)
+}
+
 func round(t *testing.T, data []byte) {
 	data1, err := Encrypt(data)
 	if err != nil {
