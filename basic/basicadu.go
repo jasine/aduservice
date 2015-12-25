@@ -3,6 +3,7 @@ package basic
 import (
 	"bytes"
 	"crypto/md5"
+	"errors"
 	"io/ioutil"
 	"log"
 )
@@ -52,34 +53,38 @@ func ComputeMd5(name, pwd string) []byte {
 	return md5bs
 }
 
-func (b *BasicAdu) Auth(name, pwd string) bool {
+func (b *BasicAdu) Auth(name, pwd string) (bool, error) {
 	if b.localmd5 != nil {
-		return bytes.Equal(b.localmd5, ComputeMd5(name, pwd))
+		return bytes.Equal(b.localmd5, ComputeMd5(name, pwd)), nil
 	}
-	return false
+	return false, nil
 }
 
-func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) bool {
-	if b.Auth(name, oldpwd) {
+func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) (bool, error) {
+	pass, err := b.Auth(name, oldpwd)
+	if err != nil {
+		return false, err
+	}
+	if pass {
 		b.localmd5 = ComputeMd5(name, newpwd)
 		err := b.setLocalMd5()
 		if err != nil {
 			log.Println(err)
-			return false
+			return false, err
 		} else {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, errors.New("auth fail")
 }
 
-func (b *BasicAdu) ResetUserAndPwd() bool {
+func (b *BasicAdu) ResetUserAndPwd() (bool, error) {
 	b.localmd5 = ComputeMd5(Init_UserNmae, Init_UserPwd)
 	err := b.setLocalMd5()
 	if err != nil {
 		log.Println(err)
-		return false
+		return false, err
 	} else {
-		return true
+		return true, nil
 	}
 }

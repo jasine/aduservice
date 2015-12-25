@@ -22,21 +22,21 @@ func InitBasicAuth4Sensor() {
 	basicAuth = basic.NewBasicAdu(filePath)
 }
 
-func BasicAuth(username, password string) bool {
+func BasicAuth(username, password string) (bool, error) {
 	return basicAuth.Auth(username, password)
 }
 
-func ChangePwd(username, oldpwd, newpwd string) bool {
+func ChangePwd(username, oldpwd, newpwd string) (bool, error) {
 	return basicAuth.ChangePwd(username, oldpwd, newpwd)
 }
 
-func ResetUserAndPwd() bool {
+func ResetUserAndPwd() (bool, error) {
 	return basicAuth.ResetUserAndPwd()
 }
 
 // BasicFunc returns a Handler that authenticates via Basic Auth using the provided function.
 // The function should return true for a valid username/password combination.
-func BasicFunc(authfn func(string, string) bool, router []string) martini.Handler {
+func BasicFunc(authfn func(string, string) (bool, error), router []string) martini.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c martini.Context) {
 		for i := 0; i < len(router); i++ {
 			if req.URL.Path == router[i] {
@@ -54,7 +54,12 @@ func BasicFunc(authfn func(string, string) bool, router []string) martini.Handle
 			return
 		}
 		tokens := strings.SplitN(string(b), ":", 2)
-		if len(tokens) != 2 || !authfn(tokens[0], tokens[1]) {
+		if len(tokens) != 2 {
+			unauthorized(res)
+			return
+		}
+		authpass, err := authfn(tokens[0], tokens[1])
+		if !authpass || err != nil {
 			unauthorized(res)
 			return
 		}
