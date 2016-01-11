@@ -14,7 +14,7 @@ RunCommand() {
 	fi
 }
 
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 RunCommand  go build -o ./adu.linux  ./aduserver.go
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 RunCommand  go build -o ./aduservice.linux  ./aduserver.go
 echo "==>adu.linux"
 
 

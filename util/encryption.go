@@ -25,6 +25,7 @@ func Decrypt(crypted []byte) ([]byte, error) {
 	return aesDecrypt(crypted, []byte(aes_key))
 }
 
+// 加入md5校验合法性
 func computeMd5(data []byte) []byte {
 	md5Ctx := md5.New()
 	md5Ctx.Write(data)
@@ -39,7 +40,7 @@ func aescheck(data []byte) bool {
 	return false
 }
 
-// 3DES加密
+// AES加密
 func aesEncrypt(origData, key []byte) ([]byte, error) {
 	origData = append(origData, computeMd5(origData)...)
 	block, err := aes.NewCipher(key)
@@ -54,7 +55,7 @@ func aesEncrypt(origData, key []byte) ([]byte, error) {
 	return crypted, nil
 }
 
-// 3DES解密
+// AES解密
 func aesDecrypt(crypted, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {

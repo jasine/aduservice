@@ -66,7 +66,6 @@ func (a *Adu4vulcand) Check(r *http.Request) bool {
 		return false
 	}
 	return bytes.Equal(basic.ComputeMd5(auth.Username, auth.Password), a.localmd5)
-
 }
 
 func (a *Adu4vulcand) run() {

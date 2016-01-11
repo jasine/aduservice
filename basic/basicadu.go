@@ -65,6 +65,9 @@ func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if pass && (len(newpwd) < 1 || len(newpwd) > 128) {
+		return false, errors.New("bad pwd length")
+	}
 	if pass {
 		b.localmd5 = ComputeMd5(name, newpwd)
 		err := b.setLocalMd5()

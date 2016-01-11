@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/base64"
 	"github.com/deepglint/aduservice/basic"
+	"github.com/deepglint/aduservice/util"
 	"github.com/go-martini/martini"
 	"net/http"
 	"strings"
@@ -32,6 +33,10 @@ func ChangePwd(username, oldpwd, newpwd string) (bool, error) {
 
 func ResetUserAndPwd() (bool, error) {
 	return basicAuth.ResetUserAndPwd()
+}
+
+func GetVersion() string {
+	return util.Version
 }
 
 // BasicFunc returns a Handler that authenticates via Basic Auth using the provided function.
