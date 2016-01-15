@@ -4,6 +4,7 @@ import (
 	//"encoding/hex"
 	"flag"
 	"fmt"
+	"github.com/deepglint/aduservice/authcode"
 	"github.com/deepglint/aduservice/basic"
 	"github.com/vulcand/oxy/utils"
 	"io/ioutil"
@@ -32,6 +33,11 @@ func main() {
 	mux.HandleFunc("/api/resetpwd", cl.Reset)
 	mux.HandleFunc("/api/login", cl.LoginNoBasic)
 	mux.HandleFunc("/api/changepwd", cl.ChangepwdNoBasic)
+
+	mux.HandleFunc("/api/authcode", cl.AuthCode)
+	mux.HandleFunc("/api/paircode", cl.PairCode)
+	mux.HandleFunc("/api/resetpwd_code", cl.Resetpwd_code)
+
 	//	mux.HandleFunc("/api/resetpwd", cl.ResetNoBasic)
 	mux.HandleFunc("/update", cl.Update)
 	mux.HandleFunc("/test", Test)
@@ -45,6 +51,64 @@ func Test(rw http.ResponseWriter, req *http.Request) {
 
 type Controller struct {
 	adu *basic.BasicAdu
+}
+
+func (c *Controller) AuthCode(w http.ResponseWriter, r *http.Request) {
+	d, e := authcode.GenAuthCode()
+	if e != nil {
+		fmt.Fprint(w, "error-"+e.Error())
+		return
+	}
+	fmt.Fprint(w, d)
+}
+
+func (c *Controller) PairCode(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	var code string
+	if v, ok := r.Form["code"]; ok {
+		code = strings.Join(v, "")
+	} else {
+		fmt.Fprint(w, "bad code")
+		return
+	}
+
+	d, e := authcode.GenPairAuthCode(code)
+	if e != nil {
+		fmt.Fprint(w, "error-"+e.Error())
+		return
+	}
+	fmt.Fprint(w, d)
+}
+
+func (c *Controller) Resetpwd_code(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	var code, pair string
+
+	if v, ok := r.Form["code"]; ok {
+		code = strings.Join(v, "")
+	} else {
+		fmt.Fprint(w, "bad code")
+		return
+	}
+
+	if v, ok := r.Form["pair"]; ok {
+		pair = strings.Join(v, "")
+	} else {
+		fmt.Fprint(w, "bad pair")
+		return
+	}
+
+	pass := authcode.AuthCodePair(code, pair)
+	if !pass {
+		fmt.Fprint(w, "code auth fail")
+		return
+	}
+	pass, _ = c.adu.ResetUserAndPwd()
+	if !pass {
+		fmt.Fprint(w, "reset fail")
+		return
+	}
+	fmt.Fprint(w, TRUE_BODY)
 }
 
 func (c *Controller) LoginNoBasic(w http.ResponseWriter, r *http.Request) {

@@ -2,7 +2,13 @@
 The ADU Service is the management service for the 
 Auth, Device, Developer, Enduser
 
-## Version - 0.0.1
+## Version - 0.0.1.1
+
+添加了基于 auth code 和 pair code 的重置功能
+
+## Changlog
+
+### version 0.0.1
 
 实现了basic auth 验证服务的API和SDK
 
@@ -27,7 +33,7 @@ Auth, Device, Developer, Enduser
 
 ### aduservice server端部署
 ```
-$ sudo docker run -i -t -d -p 8186:8186 -v /data/adu:/data/adu --name adu 192.168.5.46:5000/aduservice-t2-test:0.0.1 ./aduservice.linux
+$ sudo docker run -i -t -d -p 8186:8186 -v /data/adu:/data/adu --name adu 192.168.5.46:5000/aduservice-t2-test:0.0.1.1 ./aduservice.linux
 
 ```
 ### vulcand server端部署
@@ -88,6 +94,46 @@ Name: resetpwd
 Response: string "SUCCESS" or error msg
 ```
 
+* 获取authcode(该接口不需要basic auth 验证，只在server端提供)
+
+```
+Method: Get 
+
+Name: authcode 
+
+Body: 
+
+Response: string authcode or error msg
+```
+
+* 获取paircode(该接口不需要basic auth 验证，只在server端提供，不提供给客户使用，客户联系我们后，我们提供)
+
+```
+Method: Get 
+
+Param: code 例如：http://localhost:8186/api/paircode?code=140c63838944357c7a6faff182ac167bbfb0966c5f9177e60def74a88941d3da2b442487a71656faba8766445e7564101886f57ef2092934ea27ce7fb8f66cbd
+
+Name: paircode 
+
+Body: 
+
+Response: string paircode or error msg
+```
+
+* 重置密码(该接口不需要basic auth 验证，只在server端提供，供忘记密码，重置密码使用)
+
+```
+Method: Get 
+Param: code pair 例如：http://localhost:8186/api/resetpwd_code?code=140c63838944357c7a6faff182ac167bbfb0966c5f9177e60def74a88941d3da2b442487a71656faba8766445e7564101886f57ef2092934ea27ce7fb8f66cbd&pair=f28298040d3a17e499cd7ceee4952618482501cee4df381f20d1f974006061807ac877128539509aaf98cfe2eb541b489290f573052780a9806e0f9d2a5bf09b
+
+Name: resetpwd_code 
+
+Body: 
+
+Response: string "SUCCESS" or error msg
+```
+
+
 ## 测试环境
-* vulcand 中间件 : http://192.168.2.31:8181/test
-* aduservice : http://192.168.2.31:8186/api/login
+* vulcand 中间件 : http://192.168.2.26:8181/test
+* aduservice : http://192.168.2.26:8186/api/login
