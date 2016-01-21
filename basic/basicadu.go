@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"log"
+	"sync"
 )
 
 const (
@@ -16,21 +17,22 @@ const (
 type BasicAdu struct {
 	localmd5 []byte
 	file     string
-}
-
-func test() {
-
+	lock     sync.Mutex
 }
 
 func NewBasicAdu(file string) *BasicAdu {
 	b := &BasicAdu{
 		file: file,
 	}
-	b.GetLocalMd5()
+	if _, err := b.GetLocalMd5(); err != nil {
+		log.Println(err.Error())
+	}
 	return b
 }
 
 func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	bs, err := ioutil.ReadFile(b.file)
 	if err != nil {
 		log.Println(err)
@@ -41,6 +43,8 @@ func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
 }
 
 func (b *BasicAdu) setLocalMd5() error {
+	b.lock.Lock()
+	defer b.lock.Unlock()
 	err := ioutil.WriteFile(b.file, b.localmd5, 0600)
 	return err
 }
@@ -52,7 +56,10 @@ func ComputeMd5(name, pwd string) []byte {
 	buf = append(buf, []byte(pwd)...)
 	buf = append(buf, []byte("#deepglint")...)
 	md5Ctx := md5.New()
-	md5Ctx.Write(buf)
+	if _, err := md5Ctx.Write(buf); err != nil {
+		log.Println(err.Error())
+		return []byte("error") //todo:throw err
+	}
 	md5bs := md5Ctx.Sum(nil)
 	return md5bs
 }

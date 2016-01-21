@@ -45,9 +45,10 @@ func (a *Adu4vulcand) update() error {
 		log.Println(err)
 		return err
 	}
-	res.Body.Close()
+	if err := res.Body.Close(); err != nil {
+		log.Println(err.Error())
+	}
 	if string(result) == FALSE_BODY {
-		log.Println(FALSE_BODY)
 		return errors.New("false body")
 	} else {
 		a.localmd5 = result
@@ -73,8 +74,9 @@ func (a *Adu4vulcand) run() {
 	for {
 		select {
 		case <-ticker:
-			a.update()
-			//log.Println(a.localmd5)
+			if err := a.update(); err != nil {
+				log.Println("update error - ", err.Error())
+			}
 		case <-a.stopchan:
 			return
 		}

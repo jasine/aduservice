@@ -2,6 +2,8 @@
 The ADU Service is the management service for the 
 Auth, Device, Developer, Enduser
 
+NOTE:only for go1.4, util/encryption does not work in go1.5
+
 ## 服务
 ### basic auth - sensor
 

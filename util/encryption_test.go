@@ -60,7 +60,7 @@ func TestRound(t *testing.T) {
 	for i := 0; i < 1024*10; i++ {
 		b := byte(int8(rand.Uint32() % 256))
 		data = append(data, b)
-		go round(t, data)
+		round(t, data)
 	}
 }
 

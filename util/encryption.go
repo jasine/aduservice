@@ -43,6 +43,7 @@ func aescheck(data []byte) bool {
 // AES加密
 func aesEncrypt(origData, key []byte) ([]byte, error) {
 	origData = append(origData, computeMd5(origData)...)
+	mmmy(origData)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err

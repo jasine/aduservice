@@ -63,10 +63,12 @@ func GenPairAuthCode(code string) (string, error) {
 func checkcode(code string, prefix string) (string, time.Time, error) {
 	dataEncrypt, err := hex.DecodeString(code)
 	if err != nil {
+		glog.Errorln("hex error")
 		return "", time.Now(), err
 	}
 	data, err := util.Decrypt(dataEncrypt)
 	if err != nil {
+		glog.Errorln("Decrypt error")
 		return "", time.Now(), err
 	}
 	ss := strings.Split(string(data), ":")
@@ -77,6 +79,7 @@ func checkcode(code string, prefix string) (string, time.Time, error) {
 	uid := ss[1]
 	unixtimenano, err := strconv.ParseInt(ss[2], 10, 64)
 	if err != nil {
+		glog.Errorln("ParseInt error")
 		return "", time.Now(), err
 	}
 	dd := time.Unix(0, unixtimenano)

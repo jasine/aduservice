@@ -14,16 +14,18 @@ import (
 )
 
 const (
-	file_name  = "/data/adu/auth"
-	TRUE_BODY  = "SUCCESS"
-	FALSE_BODY = "FAIL"
+	fileName = "/data/adu/auth" //auth file path
+	// TrueBody HTTP status
+	TrueBody = "SUCCESS"
+	// FalseBody HTTP bad status
+	FalseBody = "FAIL"
 )
 
 func main() {
-	HttpAddr := ""
-	flag.StringVar(&HttpAddr, "port", ":8186", "http server port p.s. :8186")
+	HTTPAddr := ""
+	flag.StringVar(&HTTPAddr, "port", ":8186", "http server port p.s. :8186")
 	flag.Parse()
-	adu := basic.NewBasicAdu(file_name)
+	adu := basic.NewBasicAdu(fileName)
 	cl := &Controller{
 		adu: adu,
 	}
@@ -36,23 +38,29 @@ func main() {
 
 	mux.HandleFunc("/api/authcode", cl.AuthCode)
 	mux.HandleFunc("/api/paircode", cl.PairCode)
-	mux.HandleFunc("/api/resetpwd_code", cl.Resetpwd_code)
+	mux.HandleFunc("/api/resetpwd_code", cl.ResetpwdCode)
 
 	//	mux.HandleFunc("/api/resetpwd", cl.ResetNoBasic)
 	mux.HandleFunc("/update", cl.Update)
-	mux.HandleFunc("/test", Test)
+	mux.HandleFunc("/test", myTest)
 
-	log.Printf("Http server listens on %s\n", HttpAddr)
-	http.ListenAndServe(HttpAddr, mux)
-}
-func Test(rw http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(rw, TRUE_BODY)
+	log.Printf("Http server listens on %s\n", HTTPAddr)
+	if err := http.ListenAndServe(HTTPAddr, mux); err != nil {
+		log.Println("http serve error - ", err.Error())
+	}
 }
 
+// debug for basic road
+func myTest(rw http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(rw, TrueBody)
+}
+
+// Controller : http handler
 type Controller struct {
 	adu *basic.BasicAdu
 }
 
+// AuthCode used for gen authcode-client
 func (c *Controller) AuthCode(w http.ResponseWriter, r *http.Request) {
 	d, e := authcode.GenAuthCode()
 	if e != nil {
@@ -62,8 +70,13 @@ func (c *Controller) AuthCode(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, d)
 }
 
+// PairCode used for gen authcode-server
 func (c *Controller) PairCode(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Fprint(w, "bad request")
+		return
+	}
 	var code string
 	if v, ok := r.Form["code"]; ok {
 		code = strings.Join(v, "")
@@ -80,8 +93,13 @@ func (c *Controller) PairCode(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, d)
 }
 
-func (c *Controller) Resetpwd_code(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+// ResetpwdCode use auth code and pair code to reset , instead of user-pwd
+func (c *Controller) ResetpwdCode(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Fprint(w, "bad request")
+		return
+	}
 	var code, pair string
 
 	if v, ok := r.Form["code"]; ok {
@@ -108,9 +126,10 @@ func (c *Controller) Resetpwd_code(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "reset fail")
 		return
 	}
-	fmt.Fprint(w, TRUE_BODY)
+	fmt.Fprint(w, TrueBody)
 }
 
+// LoginNoBasic Login for backbone
 func (c *Controller) LoginNoBasic(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if len(body) == 0 {
@@ -131,9 +150,10 @@ func (c *Controller) LoginNoBasic(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "auth fail")
 		return
 	}
-	fmt.Fprint(w, TRUE_BODY)
+	fmt.Fprint(w, TrueBody)
 }
 
+// ChangepwdNoBasic change password for backbone
 func (c *Controller) ChangepwdNoBasic(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if len(body) == 0 {
@@ -154,16 +174,17 @@ func (c *Controller) ChangepwdNoBasic(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "auth fail")
 		return
 	}
-	fmt.Fprint(w, TRUE_BODY)
+	fmt.Fprint(w, TrueBody)
 }
 
+// ResetNoBasic reset user-pwd for backbone
 func (c *Controller) ResetNoBasic(w http.ResponseWriter, r *http.Request) {
 	b, err := c.adu.ResetUserAndPwd()
 	if err == nil && b {
-		fmt.Fprint(w, TRUE_BODY)
+		fmt.Fprint(w, TrueBody)
 		return
 	}
-	fmt.Fprint(w, FALSE_BODY)
+	fmt.Fprint(w, FalseBody)
 }
 
 func (c *Controller) praseAndAuth(r *http.Request) (bool, string, string) {
@@ -178,56 +199,64 @@ func (c *Controller) praseAndAuth(r *http.Request) (bool, string, string) {
 	return false, "", ""
 }
 
+// Auth deprecated
 func (c *Controller) Auth(w http.ResponseWriter, r *http.Request) {
 	pass, _, _ := c.praseAndAuth(r)
 	if pass {
-		fmt.Fprint(w, TRUE_BODY)
+		fmt.Fprint(w, TrueBody)
 	} else {
-		fmt.Fprint(w, FALSE_BODY)
+		fmt.Fprint(w, FalseBody)
 	}
 }
 
+// Changepwd deprecated
 func (c *Controller) Changepwd(w http.ResponseWriter, r *http.Request) {
 	pass, name, pwd := c.praseAndAuth(r)
 	if !pass {
-		fmt.Fprint(w, FALSE_BODY)
+		fmt.Fprint(w, FalseBody)
 		return
 	}
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Fprint(w, "bad request")
+		return
+	}
 	var newpwd string
 	if v, ok := r.Form["pwd"]; ok {
 		newpwd = strings.Join(v, "")
 	} else {
-		fmt.Fprint(w, FALSE_BODY)
+		fmt.Fprint(w, FalseBody)
 		return
 	}
 	b, err := c.adu.ChangePwd(name, pwd, newpwd)
 	if b && err == nil {
-		fmt.Fprint(w, TRUE_BODY)
+		fmt.Fprint(w, TrueBody)
 		return
 	}
-	fmt.Fprint(w, FALSE_BODY)
+	fmt.Fprint(w, FalseBody)
 }
 
+// Reset reset user-pwd , basic auth
 func (c *Controller) Reset(w http.ResponseWriter, r *http.Request) {
 	pass, _, _ := c.praseAndAuth(r)
 	if !pass {
-		fmt.Fprint(w, FALSE_BODY)
+		fmt.Fprint(w, FalseBody)
 		return
 	}
 	b, err := c.adu.ResetUserAndPwd()
 	if err == nil && b {
-		fmt.Fprint(w, TRUE_BODY)
+		fmt.Fprint(w, TrueBody)
 		return
 	}
-	fmt.Fprint(w, FALSE_BODY)
+	fmt.Fprint(w, FalseBody)
 }
 
+// Update used by vulcand , client should not see it
 func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 	bs, err := c.adu.GetLocalMd5()
 	if err != nil {
 		log.Println(err)
-		fmt.Fprint(w, FALSE_BODY)
+		fmt.Fprint(w, FalseBody)
 		return
 	}
 	fmt.Fprint(w, fmt.Sprintf("%s", string(bs)))

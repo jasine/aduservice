@@ -11,13 +11,13 @@ var (
 )
 
 func main() {
-	stop := make(chan bool)
 	adu.Start()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/auth", Auth)
 
-	http.ListenAndServe(":1111", mux)
-	<-stop
+	if err := http.ListenAndServe(":1111", mux); err != nil {
+		fmt.Println(err.Error())
+	}
 }
 func Auth(w http.ResponseWriter, r *http.Request) {
 	pass := adu.Check(r)

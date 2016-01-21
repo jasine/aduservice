@@ -7,66 +7,78 @@ import (
 
 func TestBasic(t *testing.T) {
 	adu := NewBasicAdu("/data/adu/auth")
-	adu.ResetUserAndPwd()
-	if !adu.Auth("admin", "admin") {
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
+	if ok, _ := adu.Auth("admin", "admin"); !ok {
 		t.Error("auth false")
 	}
 }
 
 func TestNoFile(t *testing.T) {
 	adu := NewBasicAdu("./auth1")
-	if adu.Auth("admin", "admin") {
+	if ok, _ := adu.Auth("admin", "admin"); ok {
 		t.Error("auth false")
 	}
 }
 
 func TestWrongUP(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
-	if adu.Auth("admin1", "admin") {
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
+	if ok, _ := adu.Auth("admin1", "admin"); ok {
 		t.Error("auth false")
 	}
-	if adu.Auth("admin", "admin1") {
+	if ok, _ := adu.Auth("admin", "admin1"); ok {
 		t.Error("auth false")
 	}
 }
 
 func TestEmptyUP(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
-	if adu.Auth("", "admin") {
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
+	if ok, _ := adu.Auth("", "admin"); ok {
 		t.Error("auth false")
 	}
-	if adu.Auth("admin", "") {
+	if ok, _ := adu.Auth("admin", ""); ok {
 		t.Error("auth false")
 	}
-	if adu.Auth("", "") {
+	if ok, _ := adu.Auth("", ""); ok {
 		t.Error("auth false")
 	}
 }
 
 func TestChangPWD(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
-	if !adu.Auth("admin", "admin") {
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
+	if ok, _ := adu.Auth("admin", "admin"); !ok {
 		t.Error("auth false")
 	}
-	adu.ChangePwd("admin", "admin", "admin1")
-	if adu.Auth("admin", "admin") {
+	if ok, _ := adu.ChangePwd("admin", "admin", "admin1"); !ok {
+		t.Error("fail")
+	}
+	if ok, _ := adu.Auth("admin", "admin"); ok {
 		t.Error("auth false")
 	}
-	if !adu.Auth("admin", "admin1") {
+	if ok, _ := adu.Auth("admin", "admin1"); !ok {
 		t.Error("auth false")
 	}
 }
 
 func TestThread(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
 	stop := make(chan bool)
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1000; i++ {
 		go oneauth(adu, t)
-		if i == 99999 {
+		if i == 999 {
 			close(stop)
 		}
 	}
@@ -75,11 +87,11 @@ func TestThread(t *testing.T) {
 
 func oneauth(adu *BasicAdu, t *testing.T) {
 	if rand.Int31()%2 == 0 {
-		if !adu.Auth("admin", "admin") {
+		if ok, _ := adu.Auth("admin", "admin"); !ok {
 			t.Error("should be true")
 		}
 	} else {
-		if adu.Auth("admin1", "admin") {
+		if ok, _ := adu.Auth("admin1", "admin"); ok {
 			t.Error("should be false")
 		}
 	}
@@ -93,7 +105,7 @@ func readT(adu *BasicAdu, t *testing.T) {
 }
 
 func writeT(adu *BasicAdu, t *testing.T) {
-	b := adu.ResetUserAndPwd()
+	b, _ := adu.ResetUserAndPwd()
 	if b != true {
 		t.Error("bad")
 	}
@@ -101,11 +113,13 @@ func writeT(adu *BasicAdu, t *testing.T) {
 
 func TestReadFile(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
 	stop := make(chan bool)
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1000; i++ {
 		go readT(adu, t)
-		if i == 99999 {
+		if i == 999 {
 			close(stop)
 		}
 	}
@@ -114,11 +128,13 @@ func TestReadFile(t *testing.T) {
 
 func TestWriteFile(t *testing.T) {
 	adu := NewBasicAdu("./auth")
-	adu.ResetUserAndPwd()
+	if _, err := adu.ResetUserAndPwd(); err != nil {
+		t.Error(err.Error())
+	}
 	stop := make(chan bool)
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 1000; i++ {
 		go writeT(adu, t)
-		if i == 99999 {
+		if i == 999 {
 			close(stop)
 		}
 	}

@@ -8,6 +8,7 @@ import (
 func TestBasic(t *testing.T) {
 	ServerUID = "123456"
 	code, err := GenAuthCode()
+	t.Log(code)
 	if err != nil {
 		t.Error(err.Error())
 	}
