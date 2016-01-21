@@ -18,6 +18,10 @@ type BasicAdu struct {
 	file     string
 }
 
+func test() {
+
+}
+
 func NewBasicAdu(file string) *BasicAdu {
 	b := &BasicAdu{
 		file: file,
