@@ -133,24 +133,28 @@ func (c *Controller) ResetpwdCode(w http.ResponseWriter, r *http.Request) {
 func (c *Controller) LoginNoBasic(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if len(body) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "empty body")
 		return
 	}
 	up := strings.Split(string(body), ":")
 	if len(up) != 2 {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "bad post body format")
 		return
 	}
 	authpass, err := c.adu.Auth(up[0], up[1])
 	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, err.Error())
 		return
 	}
 	if !authpass {
+		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "auth fail")
 		return
 	}
-	fmt.Fprint(w, TrueBody)
+	fmt.Fprint(w, "true")
 }
 
 // ChangepwdNoBasic change password for backbone
