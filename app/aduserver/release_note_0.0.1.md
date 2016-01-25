@@ -2,11 +2,15 @@
 The ADU Service is the management service for the 
 Auth, Device, Developer, Enduser
 
+## Version - 0.0.1.2
+
+修改login接口来兼容t1, 验证失败返回错误信息和400, 验证成功返回“true”和200
+
+## Changlog
+
 ## Version - 0.0.1.1
 
 添加了基于 auth code 和 pair code 的重置功能
-
-## Changlog
 
 ### version 0.0.1
 
