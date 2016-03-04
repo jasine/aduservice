@@ -16,13 +16,25 @@ const (
 
 type BasicAdu struct {
 	localmd5 []byte
-	file     string
+	context  interface{}
 	lock     sync.Mutex
+	loadfunc func(interface{}) ([]byte, error)
+	savefunc func(interface{}, []byte) error
 }
 
-func NewBasicAdu(file string) *BasicAdu {
+func (b *BasicAdu) SetLoadFunc(load func(interface{}) ([]byte, error)) {
+	b.loadfunc = load
+}
+
+func (b *BasicAdu) SetSaveFunc(save func(interface{}, []byte) error) {
+	b.savefunc = save
+}
+
+func NewBasicAdu(context interface{}) *BasicAdu {
 	b := &BasicAdu{
-		file: file,
+		context:  context,
+		loadfunc: GetUserItemFromFile,
+		savefunc: SetuserItemToFile,
 	}
 	if _, err := b.GetLocalMd5(); err != nil {
 		log.Println(err.Error())
@@ -30,10 +42,36 @@ func NewBasicAdu(file string) *BasicAdu {
 	return b
 }
 
+func GetUserItemFromFile(context interface{}) ([]byte, error) {
+	filename, ok := context.(string)
+	if !ok {
+		return nil, errors.New("filename param is not a string")
+	}
+	bs, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return bs, nil
+}
+
+func SetuserItemToFile(context interface{}, user []byte) error {
+	filename, ok := context.(string)
+	if !ok {
+		return errors.New("filename param is not a string")
+	}
+	err := ioutil.WriteFile(filename, user, 0600)
+	return err
+}
+
 func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	bs, err := ioutil.ReadFile(b.file)
+	// bs, err := ioutil.ReadFile(b.file)
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return nil, err
+	// }
+	bs, err := b.loadfunc(b.context)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -45,7 +83,8 @@ func (b *BasicAdu) GetLocalMd5() ([]byte, error) {
 func (b *BasicAdu) setLocalMd5() error {
 	b.lock.Lock()
 	defer b.lock.Unlock()
-	err := ioutil.WriteFile(b.file, b.localmd5, 0600)
+	// err := ioutil.WriteFile(b.file, b.localmd5, 0600)
+	err := b.savefunc(b.context, b.localmd5)
 	return err
 }
 
@@ -76,7 +115,7 @@ func (b *BasicAdu) ChangePwd(name, oldpwd, newpwd string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if pass && (len(newpwd) < 1 || len(newpwd) > 128) {
+	if pass && (len(newpwd) < 6 || len(newpwd) > 16) {
 		return false, errors.New("bad pwd length")
 	}
 	if pass {

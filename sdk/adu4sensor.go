@@ -21,6 +21,15 @@ var basicAuth *basic.BasicAdu = nil
 
 func InitBasicAuth4Sensor() {
 	basicAuth = basic.NewBasicAdu(filePath)
+	basicAuth.SetLoadFunc(basic.GetUserItemFromFile)
+	basicAuth.SetSaveFunc(basic.SetuserItemToFile)
+}
+
+func ChangeFilePath(file string) {
+	filePath = file
+	if basicAuth != nil {
+		InitBasicAuth4Sensor()
+	}
 }
 
 func BasicAuth(username, password string) (bool, error) {

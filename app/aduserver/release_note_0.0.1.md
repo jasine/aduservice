@@ -37,7 +37,7 @@ Auth, Device, Developer, Enduser
 
 ### aduservice server端部署
 ```
-$ sudo docker run -i -t -d -p 8186:8186 -v /data/adu:/data/adu --name adu 192.168.5.46:5000/aduservice-t2-test:0.0.1.1 ./aduservice.linux
+$ sudo docker run -i -t -d -p 8186:8186 -v /data/adu:/data/adu --name adu --restart=always 192.168.5.46:5000/aduservice-t2-test:0.0.1.2 ./aduservice.linux
 
 ```
 ### vulcand server端部署
