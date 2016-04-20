@@ -18,6 +18,7 @@ import (
 type MultiUserController struct {
 	lock  sync.Mutex
 	users map[string]*User
+	path  string
 	//loadfunc func(interface{}) ([]byte, error)
 	//savefunc func(interface{}, []byte) error
 }
@@ -31,7 +32,21 @@ type User struct {
 func NewMultiUserController() *MultiUserController {
 	m := new(MultiUserController)
 	m.users = make(map[string]*User)
+	//m.path = path
 	return m
+}
+
+func (this *MultiUserController) GetUserRight(name string) ([]string, error) {
+	if name == "" {
+		return []string{}, errors.New("用户名为空")
+	}
+	if this.users[name] == nil {
+		return []string{}, errors.New("用户不存在")
+	}
+	// if _, err := this.AuthUser(name, pass); err != nil {
+	// 	return []string{}, err
+	// }
+	return this.users[name].Right, nil
 }
 
 func (this *MultiUserController) ChangeRight(name string, right []string) error {
@@ -44,15 +59,15 @@ func (this *MultiUserController) ChangeRight(name string, right []string) error 
 	return nil
 }
 
-func (this *MultiUserController) AuthUser(name, pwd string) error {
+func (this *MultiUserController) AuthUser(name, pwd string) (bool, error) {
 	if this.users[name] == nil {
-		return errors.New("User not Existed")
+		return false, errors.New("User not Existed")
 	}
 	md := ComputeMd5(name, pwd)
 	if !bytes.Equal(this.users[name].Md5, md) {
-		return errors.New("Auth Failed")
+		return false, errors.New("Auth Failed")
 	}
-	return nil
+	return true, nil
 }
 
 func (this *MultiUserController) AddUser(name, pwd string, right []string) error {
@@ -66,9 +81,12 @@ func (this *MultiUserController) AddUser(name, pwd string, right []string) error
 	return nil
 }
 
-func (this *MultiUserController) UpdateUserAuth(name, pwd string) error {
+func (this *MultiUserController) UpdateUserAuth(name, oldpwd, pwd string) error {
 	if this.users[name] == nil {
 		return errors.New("User not Existed")
+	}
+	if res, _ := this.AuthUser(name, oldpwd); !res {
+		return errors.New("Error for Old User Auth")
 	}
 	md := ComputeMd5(name, pwd)
 	this.lock.Lock()

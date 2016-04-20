@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/base64"
 	"github.com/deepglint/aduservice/basic"
+	// "github.com/deepglint/aduservice/multiuser"
 	"github.com/deepglint/aduservice/util"
 	"github.com/go-martini/martini"
 	"net/http"
@@ -35,6 +36,8 @@ func ChangeFilePath(file string) {
 func BasicAuth(username, password string) (bool, error) {
 	return basicAuth.Auth(username, password)
 }
+
+// func MultiUser()
 
 func ChangePwd(username, oldpwd, newpwd string) (bool, error) {
 	return basicAuth.ChangePwd(username, oldpwd, newpwd)
