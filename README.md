@@ -15,6 +15,9 @@ NOTE:only for go1.4, util/encryption does not work in go1.5
 	- ChangePwd 修改密码
 	- ResetUserAndPwd 重置密码文件
 	- GetVersion 版本号
+* 通过设置load和save方法，调整持久化策略
+	- BasicAdu.SetLoadFunc(load func(interface{}) ([]byte, error))
+	- BasicAdu.SetSaveFunc(save func(interface{}, []byte) error)
 
 ### basic auth - server
 

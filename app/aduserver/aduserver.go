@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"github.com/deepglint/aduservice/authcode"
 	"github.com/deepglint/aduservice/basic"
+	"github.com/deepglint/aduservice/controllers"
+	"github.com/deepglint/muses/eventserver/models"
 	"github.com/vulcand/oxy/utils"
 	"io/ioutil"
 	"log"
@@ -27,25 +29,30 @@ func main() {
 	flag.Parse()
 	adu := basic.NewBasicAdu(fileName)
 	cl := &Controller{
-		adu: adu,
+		adu:           adu,
+		apiController: controllers.NewApiController("api"),
 	}
-	mux := http.NewServeMux()
-	mux.HandleFunc("/auth_basic", cl.Auth)
-	mux.HandleFunc("/changepwd_basic", cl.Changepwd)
-	mux.HandleFunc("/api/resetpwd", cl.Reset)
-	mux.HandleFunc("/api/login", cl.LoginNoBasic)
-	mux.HandleFunc("/api/changepwd", cl.ChangepwdNoBasic)
+	cl.SetDocuments()
 
-	mux.HandleFunc("/api/authcode", cl.AuthCode)
-	mux.HandleFunc("/api/paircode", cl.PairCode)
-	mux.HandleFunc("/api/resetpwd_code", cl.ResetpwdCode)
+	//mux := http.NewServeMux()
+	http.HandleFunc("/api/document", cl.apiController.Document)
+
+	http.HandleFunc("/auth_basic", cl.Auth)
+	http.HandleFunc("/changepwd_basic", cl.Changepwd)
+	http.HandleFunc("/api/resetpwd", cl.Reset)
+	http.HandleFunc("/api/login", cl.LoginNoBasic)
+	http.HandleFunc("/api/changepwd", cl.ChangepwdNoBasic)
+
+	http.HandleFunc("/api/authcode", cl.AuthCode)
+	http.HandleFunc("/api/paircode", cl.PairCode)
+	http.HandleFunc("/api/resetpwd_code", cl.ResetpwdCode)
 
 	//	mux.HandleFunc("/api/resetpwd", cl.ResetNoBasic)
-	mux.HandleFunc("/update", cl.Update)
-	mux.HandleFunc("/test", myTest)
+	http.HandleFunc("/update", cl.Update)
+	http.HandleFunc("/test", myTest)
 
 	log.Printf("Http server listens on %s\n", HTTPAddr)
-	if err := http.ListenAndServe(HTTPAddr, mux); err != nil {
+	if err := http.ListenAndServe(HTTPAddr, nil); err != nil {
 		log.Println("http serve error - ", err.Error())
 	}
 }
@@ -57,7 +64,8 @@ func myTest(rw http.ResponseWriter, req *http.Request) {
 
 // Controller : http handler
 type Controller struct {
-	adu *basic.BasicAdu
+	adu           *basic.BasicAdu
+	apiController *controllers.ApiController //*ApiController
 }
 
 // AuthCode used for gen authcode-client
@@ -264,4 +272,77 @@ func (c *Controller) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprint(w, fmt.Sprintf("%s", string(bs)))
+}
+
+func (this *Controller) SetDocuments() {
+
+	//-----API login
+	loginApi := models.NewApi("login", "/api/login", "adu", "LoginNoBasic", models.REQUEST_POST, false)
+
+	loginApi.SetDescription(
+		"login", "登录，传入 name:password，成功返回 true，失败返回错误信息")
+	loginApi.SetRequest(models.BODY_TYPE_TEXT)
+	//getVersionApi.AddParameter(name, paratype, demovalue, text_en, text_cn)
+	loginApi.RequestBodyDemo = "admin:admin"
+	//getVersionApi.SetRequest(models.BODY_TYPE_NONE)
+
+	loginApi.SetResponse(models.BODY_TYPE_TEXT)
+
+	/*getVersionApi.AddResponseBodyParameter("Name", models.TYPE_STRING, "getdocument",
+		"the name of the API",
+		"API名称",
+	)*/
+
+	loginApi.ResponseBodyDemo = "true"
+
+	this.apiController.AppendDocument(loginApi)
+
+	/*---------------*/
+
+	//-----API pwdApi
+	pwdApi := models.NewApi("changepwd", "/api/changepwd", "adu", "Changepwd", models.REQUEST_POST, false)
+
+	pwdApi.SetDescription(
+		"change password", "修改密码，传入 name:password:new_password，成功返回 SUCCESS，失败返回错误信息")
+	pwdApi.SetRequest(models.BODY_TYPE_TEXT)
+	//getVersionApi.AddParameter(name, paratype, demovalue, text_en, text_cn)
+	pwdApi.RequestBodyDemo = "admin:admin:admin_pwd_new"
+	//getVersionApi.SetRequest(models.BODY_TYPE_NONE)
+
+	pwdApi.SetResponse(models.BODY_TYPE_TEXT)
+
+	/*getVersionApi.AddResponseBodyParameter("Name", models.TYPE_STRING, "getdocument",
+		"the name of the API",
+		"API名称",
+	)*/
+
+	pwdApi.ResponseBodyDemo = "SUCCESS"
+
+	this.apiController.AppendDocument(pwdApi)
+
+	/*---------------*/
+
+	//-----API resetApi
+	resetApi := models.NewApi("resetpwd", "/api/resetpwd", "adu", "resetpwd", models.REQUEST_POST, false)
+
+	resetApi.SetDescription(
+		"reset username password", "重置用户名和密码为admin:admin(需要basic auth 验证)")
+	resetApi.SetRequest(models.BODY_TYPE_TEXT)
+	//getVersionApi.AddParameter(name, paratype, demovalue, text_en, text_cn)
+	//resetApi.RequestBodyDemo = "admin:admin:admin_pwd_new"
+	resetApi.SetRequest(models.BODY_TYPE_NONE)
+
+	resetApi.SetResponse(models.BODY_TYPE_TEXT)
+
+	/*getVersionApi.AddResponseBodyParameter("Name", models.TYPE_STRING, "getdocument",
+		"the name of the API",
+		"API名称",
+	)*/
+
+	resetApi.ResponseBodyDemo = "SUCCESS"
+
+	this.apiController.AppendDocument(resetApi)
+
+	/*---------------*/
+
 }
