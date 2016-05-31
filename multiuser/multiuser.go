@@ -29,10 +29,16 @@ type User struct {
 	Right    []string
 }
 
-func NewMultiUserController() *MultiUserController {
+func NewMultiUserController(filename string) *MultiUserController {
 	m := new(MultiUserController)
 	m.users = make(map[string]*User)
-	//m.path = path
+	m.path = filename
+	err := m.LoadFileToMap()
+	if err != nil {
+		println("Create init super admin account admin")
+		right := []string{"SuperAdmin"}
+		m.AddUser("admin", "admin", right)
+	}
 	return m
 }
 
@@ -55,8 +61,13 @@ func (this *MultiUserController) ChangeRight(name string, right []string) error 
 	}
 	this.lock.Lock()
 	this.users[name].Right = right
+	this.SaveToFile()
 	this.lock.Unlock()
 	return nil
+}
+
+func (this *MultiUserController) GetAllUsers() map[string]*User {
+	return this.users
 }
 
 func (this *MultiUserController) AuthUser(name, pwd string) (bool, error) {
@@ -77,6 +88,7 @@ func (this *MultiUserController) AddUser(name, pwd string, right []string) error
 	md := ComputeMd5(name, pwd)
 	this.lock.Lock()
 	this.users[name] = &User{Md5: md, Username: name, Right: right}
+	this.SaveToFile()
 	this.lock.Unlock()
 	return nil
 }
@@ -91,6 +103,18 @@ func (this *MultiUserController) UpdateUserAuth(name, oldpwd, pwd string) error 
 	md := ComputeMd5(name, pwd)
 	this.lock.Lock()
 	this.users[name].Md5 = md
+	this.SaveToFile()
+	this.lock.Unlock()
+	return nil
+}
+func (this *MultiUserController) DeleteUser(name string) error {
+
+	if this.users[name] == nil {
+		return errors.New("User not Existed")
+	}
+	this.lock.Lock()
+	delete(this.users, name)
+	this.SaveToFile()
 	this.lock.Unlock()
 	return nil
 }
@@ -110,20 +134,22 @@ func ComputeMd5(name, pwd string) []byte {
 	return md5bs
 }
 
-func (this *MultiUserController) SaveToFile(file string) error {
-	f, err := os.Create(file)
-	if err != nil {
-		return err
+func (this *MultiUserController) SaveToFile() error {
+	println(this.path)
+	f, err2 := os.Create(this.path)
+	if err2 != nil {
+		println(err2.Error)
+		return err2
 	}
 	defer f.Close()
 	enc := gob.NewEncoder(f)
-	err = enc.Encode(this.users)
-	return err
+	err3 := enc.Encode(this.users)
+	return err3
 }
 
-func (this *MultiUserController) LoadFileToMap(file string) error {
+func (this *MultiUserController) LoadFileToMap() error {
 	//m := make(map[string]interface{}, 0)
-	f, err := os.Open(file)
+	f, err := os.Open(this.path)
 	if err != nil {
 		return err
 	}
